@@ -2,21 +2,23 @@ import shutil
 import time
 import io
 from fastapi.testclient import TestClient
-from app.main import app, BASE_DIR, UPLOAD_DIR, get_settings
+from app.main import BASE_DIR, UPLOAD_DIR, get_settings
 
 from PIL import Image, ImageChops
+import requests
 
-client = TestClient(app) # r = requests.get()
+
+ENDPOINT = 'https://starfish-app-sbzj7.ondigitalocean.app/'
 
 def test_get_home():
-    response = client.get("/") # requests.get("") #python requests
+    response = requests.get("/") # requests.get("") #python requests
     assert response.text != "<h1>Hello world</h1>"
     assert response.status_code == 200
     assert "text/html" in response.headers['content-type']
 
 
 def test_invalid_file_upload_error():
-    response = client.post("/") # requests.post("") # python requests
+    response = requests.post("/") # requests.post("") # python requests
     assert response.status_code == 422
     assert  "application/json" in response.headers['content-type']
 
@@ -28,7 +30,7 @@ def test_prediction_upload_missing_headers():
             img = Image.open(path)
         except:
             img = None
-        response = client.post("/",
+        response = requests.post("/",
             files={"file": open(path, 'rb')}
         )
         assert response.status_code == 401
@@ -41,9 +43,9 @@ def test_prediction_upload():
             img = Image.open(path)
         except:
             img = None
-        response = client.post("/", 
+        response = requests.post("/", 
                                files={"file": open(path,'rb')},
-                               headers={"Authorization": f"JWT {settings.app_auth_token}"}
+                               headers={"Authorization": f"JWT {settings.app_auth_token_prod}"}
                                ) 
         if img is None:
             assert response.status_code == 400
@@ -63,7 +65,7 @@ def test_echo_upload():
             img = Image.open(path)
         except:
             img = None
-        response = client.post("/img-echo/", files={"file": open(path,'rb')}) 
+        response = requests.post("/img-echo/", files={"file": open(path,'rb')}) 
         if img is None:
             assert response.status_code == 400
         else:
